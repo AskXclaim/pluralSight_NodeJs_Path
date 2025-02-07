@@ -1,2 +1,2 @@
-import {VehicleException} from "./VehicleException";
-export {VehicleException}
+import {VehicleException, VehicleIdRequiredException, VehicleNotFoundException} from "./VehicleException";
+export {VehicleException, VehicleIdRequiredException, VehicleNotFoundException};

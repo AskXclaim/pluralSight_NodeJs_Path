@@ -1,14 +1,89 @@
-import http from "http";
+// import http from "http";
+import {VehicleService, VehicleServiceAdaptor} from "./services";
+import {VehicleDto} from "./dtos";
+import {errorHandler} from "./middlewares";
+import express, {NextFunction, Request, Response} from "express";
 
-const port =parseInt( process.env.PORT ?? "3000");
-const hostName = process.env.HOST ?? "127.0.0.1";
-const server =
-    http.createServer((req, res) => {
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "text/plain");
-        res.end("Hello World\n");
-    });
+const port = parseInt(process.env.PORT ?? "3000");
+const vehicleServiceAdaptor = new VehicleServiceAdaptor(new VehicleService());
+const expressApp = express();
+expressApp.use(express.json());
 
-server.listen(port, hostName, () => {
-    console.log(`Server started and running on http://${hostName}:${port}/`);
+// const hostName = process.env.HOST ?? "127.0.0.1";
+// const server =
+//     http.createServer((req, res) => {
+//         res.statusCode = 200;
+//         res.setHeader("Content-Type", "text/plain");
+//         res.end("Hello World\n");
+//     });
+//
+// server.listen(port, hostName, () => {
+//     console.log(`Server started and running on http://${hostName}:${port}/`);
+// });
+
+
+//http://localhost:3000/vehicleHealthCheck
+
+expressApp.get('/api', (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.status(301).redirect("vehicleHealthCheck");
+    } catch (err: any) {
+        next(err);
+    }
+})
+expressApp.get("/api/vehicleHealthCheck", (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.send("Health check --- Vehicle service is healthy");
+    } catch (err: any) {
+        next(err);
+    }
+});
+
+expressApp.get("/api/vehicles", async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const vehicles: VehicleDto[] = await vehicleServiceAdaptor.getAllVehicles();
+        res.status(200).send(vehicles);
+    } catch (err: any) {
+        next(err);
+    }
+});
+
+expressApp.get("/api/vehicle/:id", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const requiredVehicle = await vehicleServiceAdaptor.getVehicleById(req);
+        res.status(200).json(requiredVehicle);
+    } catch (err: any) {
+        next(err);
+    }
+})
+expressApp.post("/api/vehicle", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const createdVehicle = await vehicleServiceAdaptor.createVehicle(req);
+        res.status(201).json(createdVehicle);
+    } catch (err: any) {
+        next(err);
+    }
+});
+expressApp.put("/api/vehicle/:id", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const updatedVehicle = await vehicleServiceAdaptor.updateVehicle(req);
+        res.status(200).json(updatedVehicle);
+    } catch (err: any) {
+        next(err);
+    }
+});
+
+expressApp.delete("/api/vehicle/:id", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await vehicleServiceAdaptor.deleteVehicle(req);
+        res.status(204).end();
+    } catch (err: any) {
+        next(err);
+    }
+});
+
+expressApp.use(errorHandler);
+
+expressApp.listen(port, () => {
+    console.log(`Express App server is listening on port ${port}`);
 });
