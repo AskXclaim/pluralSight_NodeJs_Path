@@ -6,6 +6,9 @@ import express, {NextFunction, Request, Response} from "express";
 
 const port = parseInt(process.env.PORT ?? "3000");
 const vehicleServiceAdaptor = new VehicleServiceAdaptor(new VehicleService());
+const apiRoute = "/api";
+const vehicleRoute = `${apiRoute}/vehicle`;
+const vehicleIdRoute = `${vehicleRoute}/:id`;
 const expressApp = express();
 expressApp.use(express.json());
 
@@ -24,14 +27,14 @@ expressApp.use(express.json());
 
 //http://localhost:3000/vehicleHealthCheck
 
-expressApp.get('/api', (_req: Request, res: Response, next: NextFunction) => {
+expressApp.get(`${apiRoute}`, (_req: Request, res: Response, next: NextFunction) => {
     try {
         res.status(301).redirect("vehicleHealthCheck");
     } catch (err: any) {
         next(err);
     }
 })
-expressApp.get("/api/vehicleHealthCheck", (_req: Request, res: Response, next: NextFunction) => {
+expressApp.get(`${apiRoute}/vehicleHealthCheck`, (_req: Request, res: Response, next: NextFunction) => {
     try {
         res.send("Health check --- Vehicle service is healthy");
     } catch (err: any) {
@@ -39,7 +42,7 @@ expressApp.get("/api/vehicleHealthCheck", (_req: Request, res: Response, next: N
     }
 });
 
-expressApp.get("/api/vehicles", async (_req: Request, res: Response, next: NextFunction) => {
+expressApp.get(`${apiRoute}/vehicles`, async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const vehicles: VehicleDto[] = await vehicleServiceAdaptor.getAllVehicles();
         res.status(200).send(vehicles);
@@ -48,7 +51,7 @@ expressApp.get("/api/vehicles", async (_req: Request, res: Response, next: NextF
     }
 });
 
-expressApp.get("/api/vehicle/:id", async (req: Request, res: Response, next: NextFunction) => {
+expressApp.get(`${vehicleIdRoute}`, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const requiredVehicle = await vehicleServiceAdaptor.getVehicleById(req);
         res.status(200).json(requiredVehicle);
@@ -56,7 +59,7 @@ expressApp.get("/api/vehicle/:id", async (req: Request, res: Response, next: Nex
         next(err);
     }
 })
-expressApp.post("/api/vehicle", async (req: Request, res: Response, next: NextFunction) => {
+expressApp.post(`${vehicleRoute}`, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const createdVehicle = await vehicleServiceAdaptor.createVehicle(req);
         res.status(201).json(createdVehicle);
@@ -64,7 +67,7 @@ expressApp.post("/api/vehicle", async (req: Request, res: Response, next: NextFu
         next(err);
     }
 });
-expressApp.put("/api/vehicle/:id", async (req: Request, res: Response, next: NextFunction) => {
+expressApp.put(`${vehicleIdRoute}`, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const updatedVehicle = await vehicleServiceAdaptor.updateVehicle(req);
         res.status(200).json(updatedVehicle);
@@ -73,7 +76,7 @@ expressApp.put("/api/vehicle/:id", async (req: Request, res: Response, next: Nex
     }
 });
 
-expressApp.delete("/api/vehicle/:id", async (req: Request, res: Response, next: NextFunction) => {
+expressApp.delete(`${vehicleIdRoute}`, async (req: Request, res: Response, next: NextFunction) => {
     try {
         await vehicleServiceAdaptor.deleteVehicle(req);
         res.status(204).end();
@@ -81,6 +84,10 @@ expressApp.delete("/api/vehicle/:id", async (req: Request, res: Response, next: 
         next(err);
     }
 });
+
+expressApp.get("*", (_req: Request, res: Response, _next: NextFunction) => {
+    res.status(404).json("Route Not Found");
+})
 
 expressApp.use(errorHandler);
 
